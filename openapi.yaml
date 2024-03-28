@@ -1,7 +1,7 @@
 openapi: 3.0.3
 
 #  This file is part of the eliona project.
-#  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+#  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 #  ______ _ _
 # |  ____| (_)
 # | |__  | |_  ___  _ __   __ _
@@ -211,6 +211,10 @@ components:
     Configuration:
       type: object
       description: Each configuration defines access to provider's API.
+      required:
+        - baseUrl
+        - clientId
+        - clientSecret
       properties:
         id:
           type: integer
@@ -218,11 +222,25 @@ components:
           description: Internal identifier for the configured API (created automatically).
           readOnly: true
           nullable: true
-        apiAccessChangeMe:
+        baseUrl:
           type: string
-          format: string
-          description: There should be things like API address, access keys and so on.
-          example: 10.10.10.101
+          description: Base URL for the API access
+        clientId:
+          type: string
+          description: Client ID for API access
+        clientSecret:
+          type: string
+          description: Set the client secret for API access
+          writeOnly: true
+        verificationUri:
+          type: string
+          description: Login-URL to verify the access to the API
+          nullable: true
+        refreshToken:
+          type: string
+          description: Optionally set the refresh token. If not provided, it will be automatically assigned during the authentication login process managed by the app.
+          writeOnly: true
+          nullable: true
         enable:
           type: boolean
           description: Flag to enable or disable fetching from this API
@@ -237,33 +255,21 @@ components:
           description: Timeout in seconds
           default: 120
           nullable: true
-        assetFilter:
-          $ref: "#/components/schemas/AssetFilter"
-          nullable: true
-          example:
-            [
-              [{ "parameter": "deviceName", "regex": "Main.*" }, { "parameter": "deviceType", "regex": "110" }],
-              [{ "parameter": "macAddress", "regex": "(70:82:0e:12:28:cc|70:56:06:12:.*)" }],
-              [{ "parameter": "ipAddress", "regex": "192\\.168\\..*" }],
-            ]
         active:
           type: boolean
           readOnly: true
           description: Set to `true` by the app when running and to `false` when app is stopped
           nullable: true
-        projectIDs:
-          type: array
-          description: List of Eliona project ids for which this device should collect data. For each project id all smart devices are automatically created as an asset in Eliona. The mapping between Eliona is stored as an asset mapping in the KentixONE app.
-          nullable: true
-          items:
-            type: string
-          example:
-            - "42"
-            - "99"
         userId:
           type: string
           readOnly: true
           description: ID of the last Eliona user who created or updated the configuration
+          nullable: true
+          example: "90"
+        projectId:
+          type: string
+          readOnly: true
+          description: ID of the project the Eliona user created or updated the configuration
           nullable: true
           example: "90"
 

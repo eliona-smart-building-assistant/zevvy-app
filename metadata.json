@@ -1,17 +1,14 @@
 {
-  "name": "template",
-  "elionaMinVersion": "v11.0.0",
+  "name": "zevvy",
+  "elionaMinVersion": "v12.0.0",
   "displayName": {
-    "en": "App template",
-    "de": "App Vorlage"
+    "en": "Zevvy app",
+    "de": "Zevvy App"
   },
   "description": {
-    "en": "This template can be used to create an app stub for an Eliona environment.",
-    "de": "Diese Vorlage kann verwendet werden um eine App für Eliona zu erstellen."
+    "en": "This app send measurements to Zevvy.",
+    "de": "Diese App senden Messdaten an Zevvy."
   },
-  "dashboardTemplateNames": [
-    "Template"
-  ],
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",
   "documentationUrl": "https://doc.eliona.io/eliona/referenzen/app-entwicklung",

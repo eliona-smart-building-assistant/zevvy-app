@@ -1,5 +1,5 @@
 --  This file is part of the eliona project.
---  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+--  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 --  ______ _ _
 -- |  ____| (_)
 -- | |__  | |_  ___  _ __   __ _
@@ -13,26 +13,34 @@
 --  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-create schema if not exists template;
+create schema if not exists zevvy;
 
 -- Should be editable by eliona frontend.
-create table if not exists template.configuration
+create table if not exists zevvy.configuration
 (
-	id                   bigserial primary key,
-	api_access_change_me text not null,
-	refresh_interval     integer not null default 60,
-	request_timeout      integer not null default 120,
-	asset_filter         json,
-	active               boolean default false,
-	enable               boolean default false,
-	project_ids          text[],
-	user_id              text
+	id                  bigserial primary key,
+	base_url            text not null,
+	client_id           text not null,
+	client_secret       text not null,
+    device_code         text,
+    verification_uri    text,
+    verification_uri_expire     timestamp with time zone,
+    verification_interval   integer,
+    access_token        text,
+    access_token_expire     timestamp with time zone,
+    refresh_token       text,
+	refresh_interval    integer not null default 60,
+	request_timeout     integer not null default 120,
+	active              boolean default false,
+	enable              boolean default false,
+    user_id             text,
+    project_id          text
 );
 
-create table if not exists template.asset
+create table if not exists zevvy.asset
 (
 	id               bigserial primary key,
-	configuration_id bigserial not null references template.configuration(id) ON DELETE CASCADE,
+	configuration_id bigserial not null references zevvy.configuration(id) ON DELETE CASCADE,
 	project_id       text      not null,
 	global_asset_id  text      not null,
 	provider_id      text      not null,

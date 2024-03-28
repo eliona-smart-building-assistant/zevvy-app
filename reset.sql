@@ -20,51 +20,51 @@
 SET SCHEMA 'public';
 
 DELETE FROM versioning.patches
-WHERE app_name = 'template';
+WHERE app_name = 'zevvy';
 
 INSERT INTO public.eliona_store (app_name, category, version)
-VALUES ('template', 'app', '1.0.0')
+VALUES ('zevvy', 'app', '1.0.0')
 	ON CONFLICT (app_name) DO UPDATE SET version = '1.0.0';
 
 INSERT INTO public.eliona_app (app_name, enable)
-VALUES ('template', 't')
+VALUES ('zevvy', 't')
 	ON CONFLICT (app_name) DO UPDATE SET initialized_at = null;
 
-DROP SCHEMA IF EXISTS template CASCADE;
+DROP SCHEMA IF EXISTS zevvy CASCADE;
 
 DELETE FROM heap
 WHERE asset_id IN (
 	SELECT asset_id
 	FROM asset
-	WHERE asset_type LIKE E'template\\_%'
+	WHERE asset_type LIKE E'zevvy\\_%'
 );
 
 DELETE FROM attribute_schema
-WHERE asset_type LIKE E'template\\_%';
+WHERE asset_type LIKE E'zevvy\\_%';
 
 DELETE FROM asset
-WHERE asset_type LIKE E'template\\_%';
+WHERE asset_type LIKE E'zevvy\\_%';
 
 DELETE FROM asset_type
-WHERE asset_type LIKE E'template\\_%';
+WHERE asset_type LIKE E'zevvy\\_%';
 
 DELETE FROM public.widget_data
 WHERE widget_id IN (
 	SELECT public.widget.id
 	FROM public.widget
 	JOIN public.dashboard USING (dashboard_id)
-	WHERE public.dashboard.name LIKE 'Template%'
+	WHERE public.dashboard.name LIKE 'Zevvy%'
 );
 
 DELETE FROM public.widget
 WHERE dashboard_id IN (
 	SELECT dashboard_id
 	FROM public.dashboard
-	WHERE name LIKE 'Template%'
+	WHERE name LIKE 'Zevvy%'
 );
 
 DELETE FROM public.dashboard
-WHERE name LIKE 'Template%';
+WHERE name LIKE 'Zevvy%';
 
--- DELETE FROM eliona_app WHERE app_name = 'template';
--- DELETE FROM eliona_store WHERE app_name = 'template';
+-- DELETE FROM eliona_app WHERE app_name = 'zevvy';
+-- DELETE FROM eliona_store WHERE app_name = 'zevvy';

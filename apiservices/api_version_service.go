@@ -1,5 +1,5 @@
 //  This file is part of the eliona project.
-//  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+//  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 //  ______ _ _
 // |  ____| (_)
 // | |__  | |_  ___  _ __   __ _
@@ -21,7 +21,7 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"template/apiserver"
+	"zevvy-app/apiserver"
 
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/eliona-smart-building-assistant/go-utils/log"

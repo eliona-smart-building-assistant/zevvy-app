@@ -1,5 +1,5 @@
 //  This file is part of the eliona project.
-//  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+//  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 //  ______ _ _
 // |  ____| (_)
 // | |__  | |_  ___  _ __   __ _
@@ -49,9 +49,8 @@ func main() {
 
 	// Starting the service to collect the data for this app.
 	common.WaitForWithOs(
-		common.Loop(collectData, time.Second),
+		common.Loop(sendData, time.Second),
 		listenApi,
-		listenForOutputChanges,
 	)
 
 	log.Info("main", "Terminate the app.")

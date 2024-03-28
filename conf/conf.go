@@ -1,5 +1,5 @@
 //  This file is part of the eliona project.
-//  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+//  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 //  ______ _ _
 // |  ____| (_)
 // | |__  | |_  ___  _ __   __ _
@@ -18,11 +18,12 @@ package conf
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"template/apiserver"
-	"template/appdb"
+	"time"
+	"zevvy-app/apiserver"
+	"zevvy-app/appdb"
+	"zevvy-app/model"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"github.com/eliona-smart-building-assistant/go-utils/common"
@@ -56,20 +57,28 @@ func UpsertConfig(ctx context.Context, config apiserver.Configuration) (apiserve
 }
 
 func GetConfig(ctx context.Context, configID int64) (apiserver.Configuration, error) {
-	dbConfig, err := appdb.Configurations(
-		appdb.ConfigurationWhere.ID.EQ(configID),
-	).OneG(ctx)
-	if errors.Is(err, sql.ErrNoRows) {
-		return apiserver.Configuration{}, ErrNotFound
-	}
+	dbConfig, err := GetDbConfig(ctx, configID)
 	if err != nil {
-		return apiserver.Configuration{}, fmt.Errorf("fetching config from database: %v", err)
+		return apiserver.Configuration{}, err
 	}
 	apiConfig, err := apiConfigFromDbConfig(dbConfig)
 	if err != nil {
 		return apiserver.Configuration{}, fmt.Errorf("creating API config from DB config: %v", err)
 	}
 	return apiConfig, nil
+}
+
+func GetDbConfig(ctx context.Context, configID int64) (*appdb.Configuration, error) {
+	dbConfig, err := appdb.Configurations(
+		appdb.ConfigurationWhere.ID.EQ(configID),
+	).OneG(ctx)
+	if errors.Is(err, sql.ErrNoRows) || dbConfig == nil {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("fetching config from database: %v", err)
+	}
+	return dbConfig, nil
 }
 
 func DeleteConfig(ctx context.Context, configID int64) error {
@@ -94,50 +103,57 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 }
 
 func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
-	dbConfig.APIAccessChangeMe = apiConfig.ApiAccessChangeMe
-
+	dbConfig.BaseURL = apiConfig.BaseUrl
+	dbConfig.ClientID = apiConfig.ClientId
+	dbConfig.ClientSecret = apiConfig.ClientSecret
+	dbConfig.RefreshToken = null.StringFromPtr(apiConfig.RefreshToken)
 	dbConfig.ID = null.Int64FromPtr(apiConfig.Id).Int64
 	dbConfig.Enable = null.BoolFromPtr(apiConfig.Enable)
 	dbConfig.RefreshInterval = apiConfig.RefreshInterval
 	if apiConfig.RequestTimeout != nil {
 		dbConfig.RequestTimeout = *apiConfig.RequestTimeout
 	}
-	af, err := json.Marshal(apiConfig.AssetFilter)
-	if err != nil {
-		return appdb.Configuration{}, fmt.Errorf("marshalling assetFilter: %v", err)
-	}
-	dbConfig.AssetFilter = null.JSONFrom(af)
 	dbConfig.Active = null.BoolFromPtr(apiConfig.Active)
-	if apiConfig.ProjectIDs != nil {
-		dbConfig.ProjectIds = *apiConfig.ProjectIDs
-	}
-
 	env := frontend.GetEnvironment(ctx)
 	if env != nil {
 		dbConfig.UserID = null.StringFrom(env.UserId)
+		dbConfig.ProjectID = null.StringFrom(env.ProjId)
 	}
-
 	return dbConfig, nil
 }
 
 func apiConfigFromDbConfig(dbConfig *appdb.Configuration) (apiConfig apiserver.Configuration, err error) {
-	apiConfig.ApiAccessChangeMe = dbConfig.APIAccessChangeMe
-
+	apiConfig.BaseUrl = dbConfig.BaseURL
+	apiConfig.ClientId = dbConfig.ClientID
+	apiConfig.VerificationUri = dbConfig.VerificationURI.Ptr()
+	apiConfig.ClientSecret = maskSecret(dbConfig.ClientSecret)
+	apiConfig.RefreshToken = common.Ptr(maskSecret(dbConfig.RefreshToken.String))
 	apiConfig.Id = &dbConfig.ID
 	apiConfig.Enable = dbConfig.Enable.Ptr()
 	apiConfig.RefreshInterval = dbConfig.RefreshInterval
 	apiConfig.RequestTimeout = &dbConfig.RequestTimeout
-	if dbConfig.AssetFilter.Valid {
-		var af [][]apiserver.FilterRule
-		if err := json.Unmarshal(dbConfig.AssetFilter.JSON, &af); err != nil {
-			return apiserver.Configuration{}, fmt.Errorf("unmarshalling assetFilter: %v", err)
-		}
-		apiConfig.AssetFilter = af
-	}
 	apiConfig.Active = dbConfig.Active.Ptr()
-	apiConfig.ProjectIDs = common.Ptr[[]string](dbConfig.ProjectIds)
 	apiConfig.UserId = dbConfig.UserID.Ptr()
+	apiConfig.ProjectId = dbConfig.ProjectID.Ptr()
 	return apiConfig, nil
+}
+
+func maskSecret(input string) string {
+	runes := []rune(input)
+	length := len(runes)
+	cutoff := length / 3
+	for i := cutoff; i < length; i++ {
+		runes[i] = '*'
+	}
+	return string(runes)
+}
+
+func IsVerificationUriIsValid(dbConfig *appdb.Configuration) bool {
+	return dbConfig.VerificationURI.Valid && len(dbConfig.VerificationURI.String) > 0 && dbConfig.VerificationURIExpire.Time.After(time.Now())
+}
+
+func IsAccessTokenIsValid(dbConfig *appdb.Configuration) bool {
+	return dbConfig.AccessToken.Valid && len(dbConfig.AccessToken.String) > 0 && dbConfig.AccessTokenExpire.Time.After(time.Now())
 }
 
 func GetConfigs(ctx context.Context) ([]apiserver.Configuration, error) {
@@ -156,74 +172,49 @@ func GetConfigs(ctx context.Context) ([]apiserver.Configuration, error) {
 	return apiConfigs, nil
 }
 
-func SetConfigActiveState(ctx context.Context, config apiserver.Configuration, state bool) (int64, error) {
+func GetDbConfigs(ctx context.Context) ([]*appdb.Configuration, error) {
+	return appdb.Configurations().AllG(ctx)
+}
+
+func SetDbConfigActiveState(ctx context.Context, configId int64, state bool) (int64, error) {
 	return appdb.Configurations(
-		appdb.ConfigurationWhere.ID.EQ(null.Int64FromPtr(config.Id).Int64),
+		appdb.ConfigurationWhere.ID.EQ(configId),
 	).UpdateAllG(ctx, appdb.M{
 		appdb.ConfigurationColumns.Active: state,
 	})
 }
 
-func ProjIds(config apiserver.Configuration) []string {
-	if config.ProjectIDs == nil {
-		return []string{}
-	}
-	return *config.ProjectIDs
+func IsDbConfigActive(dbConfig *appdb.Configuration) bool {
+	return !dbConfig.Active.Valid || dbConfig.Active.Bool
 }
 
-func IsConfigActive(config apiserver.Configuration) bool {
-	return config.Active == nil || *config.Active
+func IsDbConfigEnabled(config *appdb.Configuration) bool {
+	return config.Enable.Valid && config.Enable.Bool
 }
 
-func IsConfigEnabled(config apiserver.Configuration) bool {
-	return config.Enable == nil || *config.Enable
+func IsLoginNeeded(config *appdb.Configuration) bool {
+	return !config.RefreshToken.Valid || len(config.RefreshToken.String) == 0
 }
 
-func SetAllConfigsInactive(ctx context.Context) (int64, error) {
-	return appdb.Configurations().UpdateAllG(ctx, appdb.M{
-		appdb.ConfigurationColumns.Active: false,
-	})
-}
-
-func InsertAsset(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string, assetId int32, providerId string) error {
-	var dbAsset appdb.Asset
-	dbAsset.ConfigurationID = null.Int64FromPtr(config.Id).Int64
-	dbAsset.ProjectID = projId
-	dbAsset.GlobalAssetID = globalAssetID
-	dbAsset.AssetID = null.Int32From(assetId)
-	dbAsset.ProviderID = providerId
-	return dbAsset.InsertG(ctx, boil.Infer())
-}
-
-func GetAssetId(ctx context.Context, config apiserver.Configuration, projId string, globalAssetID string) (*int32, error) {
-	dbAsset, err := appdb.Assets(
-		appdb.AssetWhere.ConfigurationID.EQ(null.Int64FromPtr(config.Id).Int64),
-		appdb.AssetWhere.ProjectID.EQ(projId),
-		appdb.AssetWhere.GlobalAssetID.EQ(globalAssetID),
-	).AllG(ctx)
-	if err != nil || len(dbAsset) == 0 {
-		return nil, err
-	}
-	return common.Ptr(dbAsset[0].AssetID.Int32), nil
-}
-
-func GetAssetById(assetId int32) (appdb.Asset, error) {
-	asset, err := appdb.Assets(
-		appdb.AssetWhere.AssetID.EQ(null.Int32From(assetId)),
-	).OneG(context.Background())
+func UpdateVerification(dbConfig *appdb.Configuration, verification *model.Verification) error {
+	dbConfig.DeviceCode = null.StringFrom(verification.DeviceCode)
+	dbConfig.VerificationURI = null.StringFrom(verification.VerificationUriComplete)
+	dbConfig.VerificationURIExpire = null.TimeFrom(time.Now().Add(time.Second * time.Duration(verification.ExpiresIn)))
+	dbConfig.VerificationInterval = null.Int32From(verification.Interval)
+	_, err := dbConfig.UpdateG(context.Background(), boil.Infer())
 	if err != nil {
-		return appdb.Asset{}, fmt.Errorf("fetching asset: %v", err)
+		return fmt.Errorf("error updating validation information in config %d: %w", dbConfig.ID, err)
 	}
-	return *asset, nil
+	return nil
 }
 
-func GetConfigForAsset(asset appdb.Asset) (apiserver.Configuration, error) {
-	c, err := asset.Configuration().OneG(context.Background())
-	if errors.Is(err, sql.ErrNoRows) {
-		return apiserver.Configuration{}, ErrNotFound
-	}
+func UpdateToken(dbConfig *appdb.Configuration, token *model.Token) error {
+	dbConfig.AccessToken = null.StringFrom(token.AccessToken)
+	dbConfig.AccessTokenExpire = null.TimeFrom(time.Now().Add(time.Second * time.Duration(token.ExpiresIn)))
+	dbConfig.RefreshToken = null.StringFrom(token.RefreshToken)
+	_, err := dbConfig.UpdateG(context.Background(), boil.Infer())
 	if err != nil {
-		return apiserver.Configuration{}, fmt.Errorf("fetching configuration: %v", err)
+		return fmt.Errorf("error updating token information in config %d: %w", dbConfig.ID, err)
 	}
-	return apiConfigFromDbConfig(c)
+	return nil
 }

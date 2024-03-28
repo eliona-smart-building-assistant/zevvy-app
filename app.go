@@ -1,5 +1,5 @@
 //  This file is part of the eliona project.
-//  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+//  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 //  ______ _ _
 // |  ____| (_)
 // | |__  | |_  ___  _ __   __ _
@@ -17,15 +17,8 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"sync"
-	"template/apiserver"
-	"template/apiservices"
-	"template/appdb"
-	"template/conf"
-	"template/eliona"
-	"time"
-
+	"fmt"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
 	"github.com/eliona-smart-building-assistant/go-eliona/asset"
 	"github.com/eliona-smart-building-assistant/go-eliona/dashboard"
@@ -34,6 +27,15 @@ import (
 	"github.com/eliona-smart-building-assistant/go-utils/db"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
+	"net/http"
+	"sync"
+	"time"
+	"zevvy-app/apiserver"
+	"zevvy-app/apiservices"
+	"zevvy-app/appdb"
+	"zevvy-app/conf"
+	"zevvy-app/eliona"
+	"zevvy-app/zevvy"
 )
 
 func initialization() {
@@ -53,94 +55,138 @@ func initialization() {
 
 var once sync.Once
 
-func collectData() {
-	configs, err := conf.GetConfigs(context.Background())
+func sendData() {
+	dbConfigs, err := conf.GetDbConfigs(context.Background())
 	if err != nil {
 		log.Fatal("conf", "Couldn't read configs from DB: %v", err)
 		return
 	}
-	if len(configs) == 0 {
+	if len(dbConfigs) == 0 {
 		once.Do(func() {
 			log.Info("conf", "No configs in DB. Please configure the app in Eliona.")
 		})
 		return
 	}
 
-	for _, config := range configs {
-		if !conf.IsConfigEnabled(config) {
-			if conf.IsConfigActive(config) {
-				conf.SetConfigActiveState(context.Background(), config, false)
+	for _, dbConfig := range dbConfigs {
+
+		if conf.IsDbConfigEnabled(dbConfig) {
+
+			if !conf.IsDbConfigActive(dbConfig) {
+				_, _ = conf.SetDbConfigActiveState(context.Background(), dbConfig.ID, false)
 			}
-			continue
-		}
 
-		if !conf.IsConfigActive(config) {
-			conf.SetConfigActiveState(context.Background(), config, true)
-			log.Info("conf", "Collecting initialized with Configuration %d:\n"+
-				"Enable: %t\n"+
-				"Refresh Interval: %d\n"+
-				"Request Timeout: %d\n"+
-				"Project IDs: %v\n",
-				*config.Id,
-				*config.Enable,
-				config.RefreshInterval,
-				*config.RequestTimeout,
-				*config.ProjectIDs)
-		}
+			_, _ = conf.SetDbConfigActiveState(context.Background(), dbConfig.ID, true)
+			log.Trace("conf", "Collecting initialized with Configuration %d:\n"+
+				"Enable: %t\nBase URL: %s\nClient ID: %s\nRefresh Interval: %d\nRequest Timeout: %d\n",
+				dbConfig.ID, dbConfig.Enable.Bool, dbConfig.BaseURL, dbConfig.ClientID, dbConfig.RefreshInterval, dbConfig.RequestTimeout)
 
-		common.RunOnceWithParam(func(config apiserver.Configuration) {
-			log.Info("main", "Collecting %d started.", *config.Id)
-			if err := collectResources(&config); err != nil {
-				return // Error is handled in the method itself.
-			}
-			log.Info("main", "Collecting %d finished.", *config.Id)
-
-			time.Sleep(time.Second * time.Duration(config.RefreshInterval))
-		}, config, *config.Id)
-	}
-}
-
-func collectResources(config *apiserver.Configuration) error {
-	// Do the magic here
-	return nil
-}
-
-// listenForOutputChanges listens to output attribute changes from Eliona. Delete if not needed.
-func listenForOutputChanges() {
-	for { // We want to restart listening in case something breaks.
-		outputs, err := eliona.ListenForOutputChanges()
-		if err != nil {
-			log.Error("eliona", "listening for output changes: %v", err)
-			return
-		}
-		for output := range outputs {
-			if cr := output.ClientReference.Get(); cr != nil && *cr == eliona.ClientReference {
-				// Just an echoed value this app sent.
+			// Check for Login process
+			if conf.IsLoginNeeded(dbConfig) {
+				common.RunOnceWithParam(func(config appdb.Configuration) {
+					startLoginProcess(&config)
+					time.Sleep(time.Second * time.Duration(config.VerificationInterval.Int32))
+				}, *dbConfig, dbConfig.ID)
 				continue
 			}
-			asset, err := conf.GetAssetById(output.AssetId)
-			if err != nil {
-				log.Error("conf", "getting asset by assetID %v: %v", output.AssetId, err)
-				return
+
+			// Check for valid access token
+			if !conf.IsAccessTokenIsValid(dbConfig) {
+				refreshTokens(dbConfig)
 			}
-			config, err := conf.GetConfigForAsset(asset)
-			if err != nil {
-				log.Error("conf", "getting configuration for asset id %v: %v", asset.AssetID.Int32, err)
-				return
-			}
-			if err := outputData(asset, config, output.Data); err != nil {
-				log.Error("conf", "outputting data (%v) for config %v and assetId %v: %v", output.Data, config.Id, asset.AssetID.Int32, err)
-				return
-			}
+
+			// start working
+			common.RunOnceWithParam(func(config appdb.Configuration) {
+
+				log.Info("app", "Do something for %d", config.ID)
+
+				//log.Info("main", "Collecting %d started.", *config.Id)
+				//if err := collectResources(&config); err != nil {
+				//	return // Error is handled in the method itself.
+				//}
+				//log.Info("main", "Collecting %d finished.", *config.Id)
+
+				time.Sleep(time.Second * time.Duration(config.RefreshInterval))
+			}, *dbConfig, dbConfig.ID)
+
 		}
-		time.Sleep(time.Second * 5) // Give the server a little break.
 	}
 }
 
-// outputData implements passing output data to broker. Remove if not needed.
-func outputData(asset appdb.Asset, config apiserver.Configuration, data map[string]interface{}) error {
-	// Do the output magic here.
-	return nil
+func refreshTokens(dbConfig *appdb.Configuration) {
+	log.Info("zevvy", "Get new access token for configuration %d", dbConfig.ID)
+	token, err := zevvy.RefreshTokens(dbConfig)
+	if err != nil {
+		log.Error("zevvy", "Cannot get new token: %v", err)
+		return
+	}
+
+	log.Info("zevvy", "Update new access and refresh token %d", dbConfig.ID)
+	err = conf.UpdateToken(dbConfig, token)
+	if err != nil || !conf.IsAccessTokenIsValid(dbConfig) {
+		log.Error("zevvy", "Cannot update token in configuration: %v", err)
+		return
+	}
+}
+
+func startLoginProcess(dbConfig *appdb.Configuration) {
+
+	// Get verification URI
+	if !conf.IsVerificationUriIsValid(dbConfig) {
+
+		// Get verification URL
+		log.Info("zevvy", "Start authentication process for configuration %d", dbConfig.ID)
+		log.Info("zevvy", "Get new verification URL for authentication process for configuration %d", dbConfig.ID)
+		verification, err := zevvy.GetVerification(dbConfig)
+		if err != nil {
+			log.Error("zevvy", "Cannot get verification: %v", err)
+			return
+		}
+
+		err = conf.UpdateVerification(dbConfig, verification)
+		if err != nil || !conf.IsVerificationUriIsValid(dbConfig) {
+			log.Error("zevvy", "Cannot update verification in configuration: %v", err)
+			return
+		}
+
+		// Notify user
+		log.Info("zevvy", "Notify user about verification URL for authentication process for configuration %d", dbConfig.ID)
+		err = eliona.NotifyUser(dbConfig.UserID.String, dbConfig.ProjectID.String, api.Translation{
+			De: common.Ptr(fmt.Sprintf("Sie haben die Zevvy-App kürzlich eingerichtet. Um der App den Zugriff auf die Zevvy-API zu ermöglichen, müssen Sie Ihre Anmeldung verifizieren: %s", dbConfig.VerificationURI.String)),
+			En: common.Ptr(fmt.Sprintf("You recently set up the Zevvy app. To enable the app's access to the Zevvy API, you must verify your login: %s", dbConfig.VerificationURI.String)),
+		})
+		if err != nil {
+			log.Error("eliona", "Cannot notify user about verification: %v", err)
+			return
+		}
+	}
+
+	// Check if verification is done
+	token, err := zevvy.GetTokens(dbConfig)
+	if err != nil {
+		log.Error("zevvy", "Cannot check verification: %v", err)
+		return
+	}
+
+	log.Info("zevvy", "Update new access and refresh token %d", dbConfig.ID)
+	err = conf.UpdateToken(dbConfig, token)
+	if err != nil || !conf.IsAccessTokenIsValid(dbConfig) {
+		log.Error("zevvy", "Cannot update token in configuration: %v", err)
+		return
+	} else {
+		// Notify user
+		log.Info("zevvy", "Notify user about successful authentication process for configuration %d", dbConfig.ID)
+		err = eliona.NotifyUser(dbConfig.UserID.String, dbConfig.ProjectID.String, api.Translation{
+			De: common.Ptr(fmt.Sprintf("Verifikation der Zevvy App war erfolgreich.")),
+			En: common.Ptr(fmt.Sprintf("Verification of the Zevvy app was successful.")),
+		})
+		if err != nil {
+			log.Error("eliona", "Cannot notify user about verification: %v", err)
+			return
+		}
+	}
+
+	return
 }
 
 // listenApi starts the API server and listen for requests

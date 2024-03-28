@@ -1,5 +1,5 @@
 //  This file is part of the eliona project.
-//  Copyright © 2022 LEICOM iTEC AG. All Rights Reserved.
+//  Copyright © 2024 LEICOM iTEC AG. All Rights Reserved.
 //  ______ _ _
 // |  ____| (_)
 // | |__  | |_  ___  _ __   __ _
@@ -13,13 +13,26 @@
 //  DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-package broker
+package eliona
 
 import (
-	"template/apiserver"
-	"template/model"
+	"fmt"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/eliona-smart-building-assistant/go-eliona/client"
 )
 
-func GetDevices(config apiserver.Configuration) (model.Root, error) {
-	return model.Root{}, nil
+func NotifyUser(userId string, projectId string, translation api.Translation) error {
+	_, _, err := client.NewClient().CommunicationAPI.
+		PostNotification(client.AuthenticationContext()).
+		Notification(
+			api.Notification{
+				User:      userId,
+				ProjectId: *api.NewNullableString(&projectId),
+				Message:   *api.NewNullableTranslation(&translation),
+			}).
+		Execute()
+	if err != nil {
+		return fmt.Errorf("posting CAC notification: %v", err)
+	}
+	return nil
 }
