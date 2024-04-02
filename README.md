@@ -53,31 +53,43 @@ The app provides its own API to access configuration data and other functions. T
 
 **Generation**: to generate api server stub see Generation section below.
 
+### Configuring the app ###
 
-### Eliona assets ###
+To use the app it is necessary to create at least one configuration. A configuration points to one Zevvy Login.
 
-This app creates Eliona asset types and attribute sets during initialization.
+A minimum configuration that can used by the app's API endpoint `POST /configs` is:
 
-The data is written for each device, structured into different subtypes of Elinoa assets. The following subtypes are defined:
+```json
+{
+  "rootUrl": "https://iam.zevvy.org",
+  "authUrlPath": "/realms/zevvy-prod",
+  "clientId": "client",
+  "clientSecret": "secret",
+  "enable": true
+}
+```
 
-- `Info`: Static data which provides information about a device like address and firmware info.
-- `Status`: Device status information, like battery level.
-- `Input`: Current values reported by sensors.
-- `Output`: Values that are to be passed back to the provider.
+The configuration may include an optional `refreshToken` property provided by the user. In its absence, the application initiates the authorization sequence by generating a new login URL. This URL is communicated to the requester through a user notification and can also be accessed by making a `GET /configs` request.
 
-### Continuous asset creation ###
+Following user login and API access verification, the application finalizes the configuration in the background. Upon successful acquisition of both an access and a refresh token, the user receives a notification via the Eliona frontend.
 
-Assets for all devices connected to the Template account are created automatically when the configuration is added.
+It's important to note that both the `clientSecret` and `refreshToken` properties are write-only for enhanced security. Thus, they cannot be fully retrieved through GET requests.
 
-To select which assets to create, a filter could be specified in config. The schema of the filter is defined in the `openapi.yaml` file.
+### Define assets attributes ###
 
-Possible filter parameters are defined in the structs in `broker.go` and marked with `eliona:"attribute_name,filterable"` field tag.
+To ensure data is successfully reported to Zevvy, the necessary asset attributes must be correctly configured via `PUT /asset-attributes` request.
 
-To avoid conflicts, the Global Asset Identifier is a manufacturer's ID prefixed with asset type name as a namespace.
+```json
+{
+  "assetId": 4711,
+  "subtype": "input",
+  "clientId": "power"
+}
+```
 
-### Dashboard ###
+For each attribute all the data stored in Eliona will be sent to Zevvy with the corresponding timestamp.
 
-An example dashboard meant for a quick start or showcasing the apps abilities can be obtained by accessing the dashboard endpoint defined in the `openapi.yaml` file.
+The asset's GAI is used as device reference and the name off the attribute as register reference. The values can be overwritten by the optional `deviceReference` and `registerReference` properties.
 
 ## Tools
 

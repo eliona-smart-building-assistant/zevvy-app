@@ -14,6 +14,15 @@ import (
 	"net/http"
 )
 
+// AssetAttributeAPIRouter defines the required methods for binding the api requests to a responses for the AssetAttributeAPI
+// The AssetAttributeAPIRouter implementation should parse necessary information from the http request,
+// pass the data to a AssetAttributeAPIServicer to perform the required actions, then write the service results to the http response.
+type AssetAttributeAPIRouter interface {
+	DeleteAssetAttributes(http.ResponseWriter, *http.Request)
+	GetAssetAttributes(http.ResponseWriter, *http.Request)
+	PutAssetAttribute(http.ResponseWriter, *http.Request)
+}
+
 // ConfigurationAPIRouter defines the required methods for binding the api requests to a responses for the ConfigurationAPI
 // The ConfigurationAPIRouter implementation should parse necessary information from the http request,
 // pass the data to a ConfigurationAPIServicer to perform the required actions, then write the service results to the http response.
@@ -25,19 +34,22 @@ type ConfigurationAPIRouter interface {
 	PutConfigurationById(http.ResponseWriter, *http.Request)
 }
 
-// CustomizationAPIRouter defines the required methods for binding the api requests to a responses for the CustomizationAPI
-// The CustomizationAPIRouter implementation should parse necessary information from the http request,
-// pass the data to a CustomizationAPIServicer to perform the required actions, then write the service results to the http response.
-type CustomizationAPIRouter interface {
-	GetDashboardTemplateByName(http.ResponseWriter, *http.Request)
-}
-
 // VersionAPIRouter defines the required methods for binding the api requests to a responses for the VersionAPI
 // The VersionAPIRouter implementation should parse necessary information from the http request,
 // pass the data to a VersionAPIServicer to perform the required actions, then write the service results to the http response.
 type VersionAPIRouter interface {
 	GetOpenAPI(http.ResponseWriter, *http.Request)
 	GetVersion(http.ResponseWriter, *http.Request)
+}
+
+// AssetAttributeAPIServicer defines the api actions for the AssetAttributeAPI service
+// This interface intended to stay up to date with the openapi yaml used to generate it,
+// while the service implementation can be ignored with the .openapi-generator-ignore file
+// and updated with the logic required for the API.
+type AssetAttributeAPIServicer interface {
+	DeleteAssetAttributes(context.Context, int32, int32, string, string) (ImplResponse, error)
+	GetAssetAttributes(context.Context, int32, int32, string, string) (ImplResponse, error)
+	PutAssetAttribute(context.Context, AssetAttribute) (ImplResponse, error)
 }
 
 // ConfigurationAPIServicer defines the api actions for the ConfigurationAPI service
@@ -50,14 +62,6 @@ type ConfigurationAPIServicer interface {
 	GetConfigurations(context.Context) (ImplResponse, error)
 	PostConfiguration(context.Context, Configuration) (ImplResponse, error)
 	PutConfigurationById(context.Context, int64, Configuration) (ImplResponse, error)
-}
-
-// CustomizationAPIServicer defines the api actions for the CustomizationAPI service
-// This interface intended to stay up to date with the openapi yaml used to generate it,
-// while the service implementation can be ignored with the .openapi-generator-ignore file
-// and updated with the logic required for the API.
-type CustomizationAPIServicer interface {
-	GetDashboardTemplateByName(context.Context, string, string) (ImplResponse, error)
 }
 
 // VersionAPIServicer defines the api actions for the VersionAPI service

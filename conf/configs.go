@@ -31,7 +31,6 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-var ErrBadRequest = errors.New("bad request")
 var ErrNotFound = errors.New("not found")
 
 func InsertConfig(ctx context.Context, config apiserver.Configuration) (apiserver.Configuration, error) {
@@ -82,11 +81,6 @@ func GetDbConfig(ctx context.Context, configID int64) (*appdb.Configuration, err
 }
 
 func DeleteConfig(ctx context.Context, configID int64) error {
-	if _, err := appdb.Assets(
-		appdb.AssetWhere.ConfigurationID.EQ(configID),
-	).DeleteAllG(ctx); err != nil {
-		return fmt.Errorf("deleting assets from database: %v", err)
-	}
 	count, err := appdb.Configurations(
 		appdb.ConfigurationWhere.ID.EQ(configID),
 	).DeleteAllG(ctx)

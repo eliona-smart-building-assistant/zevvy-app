@@ -95,3 +95,16 @@ func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 
 	return token, nil
 }
+
+func SendMeasurements(dbConfig *appdb.Configuration, dbAssetAttribute *appdb.AssetAttribute, measurements []model.Measurement) error {
+	fullUrl := dbConfig.RootURL + fmt.Sprintf("/deviceRef/%s/registerRef/%s/measurements/_bulk_create", dbAssetAttribute.DeviceReference, dbAssetAttribute.RegisterReference)
+	request, err := utilshttp.NewPostRequestWithBearer(fullUrl, measurements, dbConfig.AccessToken.String)
+	if err != nil {
+		return err
+	}
+	_, statusCode, err := utilshttp.ReadWithStatusCode[any](request, time.Duration(dbConfig.RequestTimeout)*time.Second, true)
+	if err != nil || statusCode != http.StatusOK {
+		return fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
+	}
+	return nil
+}

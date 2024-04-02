@@ -31,13 +31,13 @@ tags:
     externalDocs:
       url: https://github.com/eliona-smart-building-assistant/app-template
 
-  - name: Version
-    description: API version
+  - name: Asset Attribute
+    description: Configure asset attributes
     externalDocs:
       url: https://github.com/eliona-smart-building-assistant/app-template
 
-  - name: Customization
-    description: Help to customize Eliona environment
+  - name: Version
+    description: API version
     externalDocs:
       url: https://github.com/eliona-smart-building-assistant/app-template
 
@@ -129,6 +129,62 @@ paths:
         "400":
           description: Bad request
 
+  /asset-attributes:
+    get:
+      tags:
+        - Asset Attribute
+      summary: Get configured asset attributes
+      description: Gets information about all configured asset attributes.
+      parameters:
+        - $ref: "#/components/parameters/configId"
+        - $ref: "#/components/parameters/assetId"
+        - $ref: "#/components/parameters/subtype"
+        - $ref: "#/components/parameters/attributeName"
+      operationId: getAssetAttributes
+      responses:
+        "200":
+          description: Successfully returned all configured asset attributes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AssetAttribute"
+    put:
+      tags:
+        - Asset Attribute
+      summary: Creates or updates a configured asset attribute
+      description: Creates a new or updates an existing configured asset attributes. The update is done for existing combination of assetId, subtype and attributeName.
+      operationId: putAssetAttribute
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssetAttribute"
+      responses:
+        "200":
+          description: Successfully created or updated a configured asset attributes
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AssetAttribute"
+    delete:
+      tags:
+        - Asset Attribute
+      summary: Deletes configured asset attributes
+      description: Removes configured asset attributes
+      parameters:
+        - $ref: "#/components/parameters/configId"
+        - $ref: "#/components/parameters/assetId"
+        - $ref: "#/components/parameters/subtype"
+        - $ref: "#/components/parameters/attributeName"
+      operationId: deleteAssetAttributes
+      responses:
+        "204":
+          description: Successfully deleted configured asset attributes
+        "400":
+          description: Bad request
+
   /version:
     get:
       summary: Version of the API
@@ -159,41 +215,6 @@ paths:
               schema:
                 type: object
 
-  /dashboard-templates/{dashboard-template-name}:
-    get:
-      tags:
-        - Customization
-      summary: Get a full dashboard template
-      description: Delivers a dashboard template which can assigned to users in Eliona
-      externalDocs:
-        description: The API to assign the dashboard to users in Eliona (see post /dashboards endpoint).
-        url: https://github.com/eliona-smart-building-assistant/eliona-api
-      operationId: getDashboardTemplateByName
-      parameters:
-        - name: dashboard-template-name
-          in: path
-          description: Name of the dashboard template
-          required: true
-          schema:
-            type: string
-            example: Template
-        - name: projectId
-          in: query
-          description: Define the project the dashboard should be
-          required: true
-          schema:
-            type: string
-            example: 99
-      responses:
-        "200":
-          description: Successfully returned dashboard template
-          content:
-            application/json:
-              schema:
-                $ref: "https://raw.githubusercontent.com/eliona-smart-building-assistant/eliona-api/main/openapi.yaml#/components/schemas/Dashboard"
-        "404":
-          description: Template name not found
-
 components:
   parameters:
     config-id:
@@ -206,6 +227,42 @@ components:
         type: integer
         format: int64
         example: 4711
+    configId:
+      name: configId
+      in: query
+      description: The id of the configuration
+      example: 1
+      required: false
+      schema:
+        type: integer
+        example: 1
+    assetId:
+      name: assetId
+      in: query
+      description: The id of the asset
+      example: 4711
+      required: false
+      schema:
+        type: integer
+        example: 4711
+    subtype:
+      name: subtype
+      in: query
+      description: The subtype og the asset attribute
+      example: input
+      required: false
+      schema:
+        type: string
+        example: input
+    attributeName:
+      name: attributeName
+      in: query
+      description: The name of the asset attribute
+      example: power
+      required: false
+      schema:
+        type: string
+        example: power
 
   schemas:
     Configuration:
@@ -277,22 +334,35 @@ components:
           nullable: true
           example: "90"
 
-    AssetFilter:
-      type: array
-      description: Array of rules combined by logical OR
-      items:
-        type: array
-        description: Array of rules combined by logical AND
-        items:
-          $ref: "#/components/schemas/FilterRule"
-
-    FilterRule:
+    AssetAttribute:
       type: object
-      description: Asset selection rule. Possible parameters are defined in app's README file.
+      description: Specify asset attribute for reporting data to Zevvy.
+      required:
+        - assetId
+        - subtype
+        - attributeName
       properties:
-        parameter:
+        configId:
+          type: integer
+          description: Config ID
+        assetId:
+          type: integer
+          description: Eliona asset ID
+        subtype:
           type: string
-          example: "name"
-        regex:
+          description: Asset attribute subtype
+        attributeName:
           type: string
-          example: "^first_floor_.*$"
+          description: Asset attribute name
+        latestTimestamp:
+          type: string
+          format: date-time
+          description: Latest timestamp of data sent to Zevvy
+        deviceReference:
+          type: string
+          description: The device reference in Zevvy (default device reference is asset's GAI)
+          nullable: true
+        registerReference:
+          type: string
+          description: The register reference in Zevvy (default register reference is the attribute name)
+          nullable: true

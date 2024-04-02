@@ -14,3 +14,28 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 package eliona
+
+import (
+	"fmt"
+	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
+	"github.com/eliona-smart-building-assistant/go-eliona/client"
+	"time"
+	"zevvy-app/appdb"
+)
+
+func GetDataTrends(dbAssetAttribute *appdb.AssetAttribute) ([]api.Data, error) {
+	dataTrends, response, err := client.NewClient().DataAPI.GetDataTrends(client.AuthenticationContext()).
+		AssetId(dbAssetAttribute.AssetID).
+		DataSubtype(dbAssetAttribute.Subtype).
+		FromDate(dbAssetAttribute.LatestTS.Format(time.RFC3339)).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("error fetching data trends from ELiona API %d: %w", response.StatusCode, err)
+	}
+	return dataTrends, nil
+}
+
+func GetAsset(dbAssetAttribute *appdb.AssetAttribute) (*api.Asset, error) {
+	asset, _, err := client.NewClient().AssetsAPI.GetAssetById(client.AuthenticationContext(), dbAssetAttribute.AssetID).Execute()
+	return asset, err
+}

@@ -35,6 +35,7 @@ import (
 	"zevvy-app/appdb"
 	"zevvy-app/conf"
 	"zevvy-app/eliona"
+	"zevvy-app/model"
 	"zevvy-app/zevvy"
 )
 
@@ -101,17 +102,101 @@ func sendData() {
 
 				log.Info("app", "Do something for %d", config.ID)
 
-				//log.Info("main", "Collecting %d started.", *config.Id)
-				//if err := collectResources(&config); err != nil {
-				//	return // Error is handled in the method itself.
-				//}
-				//log.Info("main", "Collecting %d finished.", *config.Id)
+				log.Info("main", "Collecting %d started.", config.ID)
+				if err := collectData(&config); err != nil {
+					return // Error is handled in the method itself.
+				}
+				log.Info("main", "Collecting %d finished.", config.ID)
 
 				time.Sleep(time.Second * time.Duration(config.RefreshInterval))
 			}, *dbConfig, dbConfig.ID)
 
 		}
 	}
+}
+
+func collectData(dbConfig *appdb.Configuration) error {
+
+	ctx := context.Background()
+	dbAssetAttributes, err := conf.GetDbAssetAttributes(ctx, dbConfig.ID)
+	if err != nil {
+		log.Error("app", "Cannot get asset attributes: %v", err)
+		return err
+	}
+
+	for _, dbAssetAttribute := range dbAssetAttributes {
+
+		log.Debug("main", "Sending for attribute %d %s %s.", dbAssetAttribute.AssetID, dbAssetAttribute.Subtype, dbAssetAttribute.AttributeName)
+
+		dataTrends, err := eliona.GetDataTrends(dbAssetAttribute)
+		if err != nil {
+			log.Error("ELiona", "Cannot get asset attributes: %v", err)
+			return err
+		}
+
+		// convert trend data to measurements
+		var measurements []model.Measurement
+		var latestTimestamp time.Time
+		for _, dataTrend := range dataTrends {
+			if dataTrend.Timestamp.IsSet() {
+				timestamp := common.Val(dataTrend.Timestamp.Get())
+
+				// check if data is already sent
+				if !timestamp.After(dbAssetAttribute.LatestTS) {
+					continue
+				}
+
+				// convert data trend to measurement
+				measurement := measurementFromTrend(timestamp, dataTrend, dbAssetAttribute)
+				if measurement.Value != nil {
+					log.Debug("main", "Sending data for attribute %s: %d", measurement.ReadAt.Format(time.RFC3339), *measurement.Value)
+					measurements = append(measurements, measurement)
+				}
+
+				// remember latest timestamp
+				if latestTimestamp.Before(timestamp) {
+					latestTimestamp = timestamp
+				}
+
+			}
+		}
+
+		// send measurements to Zevvy
+		if len(measurements) > 0 {
+			err := zevvy.SendMeasurements(dbConfig, dbAssetAttribute, measurements)
+			if err != nil {
+				log.Error("Zevvy", "Cannot send measurements to Zevvy: %v", err)
+				return err
+			}
+		}
+
+		// Store latest timestamp
+		err = conf.UpdateAssetAttributeLatestTimestamp(ctx, dbAssetAttribute, latestTimestamp)
+		if err != nil {
+			log.Error("Conf", "Cannot update latest timestamp: %v", err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func measurementFromTrend(timestamp time.Time, dataTrend api.Data, dbAssetAttribute *appdb.AssetAttribute) model.Measurement {
+	measurement := model.Measurement{
+		ReadAt: timestamp,
+	}
+	if value, ok := dataTrend.Data[dbAssetAttribute.AttributeName]; ok {
+		if intValue, ok := value.(int); ok {
+			measurement.Value = &intValue
+		}
+		if intValue, ok := value.(int32); ok {
+			measurement.Value = common.Ptr(int(intValue))
+		}
+		if intValue, ok := value.(int64); ok {
+			measurement.Value = common.Ptr(int(intValue))
+		}
+	}
+	return measurement
 }
 
 func refreshTokens(dbConfig *appdb.Configuration) {
@@ -198,7 +283,7 @@ func listenApi() {
 				apiserver.NewRouter(
 					apiserver.NewConfigurationAPIController(apiservices.NewConfigurationAPIService()),
 					apiserver.NewVersionAPIController(apiservices.NewVersionAPIService()),
-					apiserver.NewCustomizationAPIController(apiservices.NewCustomizationAPIService()),
+					apiserver.NewAssetAttributeAPIController(apiservices.NewAssetAttributeAPIService()),
 				))))
 	log.Fatal("main", "API server: %v", err)
 }
