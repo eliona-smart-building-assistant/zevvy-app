@@ -25,7 +25,8 @@ import (
 // Configuration is an object representing the database table.
 type Configuration struct {
 	ID                    int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	BaseURL               string      `boil:"base_url" json:"base_url" toml:"base_url" yaml:"base_url"`
+	RootURL               string      `boil:"root_url" json:"root_url" toml:"root_url" yaml:"root_url"`
+	AuthURLPath           string      `boil:"auth_url_path" json:"auth_url_path" toml:"auth_url_path" yaml:"auth_url_path"`
 	ClientID              string      `boil:"client_id" json:"client_id" toml:"client_id" yaml:"client_id"`
 	ClientSecret          string      `boil:"client_secret" json:"client_secret" toml:"client_secret" yaml:"client_secret"`
 	DeviceCode            null.String `boil:"device_code" json:"device_code,omitempty" toml:"device_code" yaml:"device_code,omitempty"`
@@ -48,7 +49,8 @@ type Configuration struct {
 
 var ConfigurationColumns = struct {
 	ID                    string
-	BaseURL               string
+	RootURL               string
+	AuthURLPath           string
 	ClientID              string
 	ClientSecret          string
 	DeviceCode            string
@@ -66,7 +68,8 @@ var ConfigurationColumns = struct {
 	ProjectID             string
 }{
 	ID:                    "id",
-	BaseURL:               "base_url",
+	RootURL:               "root_url",
+	AuthURLPath:           "auth_url_path",
 	ClientID:              "client_id",
 	ClientSecret:          "client_secret",
 	DeviceCode:            "device_code",
@@ -86,7 +89,8 @@ var ConfigurationColumns = struct {
 
 var ConfigurationTableColumns = struct {
 	ID                    string
-	BaseURL               string
+	RootURL               string
+	AuthURLPath           string
 	ClientID              string
 	ClientSecret          string
 	DeviceCode            string
@@ -104,7 +108,8 @@ var ConfigurationTableColumns = struct {
 	ProjectID             string
 }{
 	ID:                    "configuration.id",
-	BaseURL:               "configuration.base_url",
+	RootURL:               "configuration.root_url",
+	AuthURLPath:           "configuration.auth_url_path",
 	ClientID:              "configuration.client_id",
 	ClientSecret:          "configuration.client_secret",
 	DeviceCode:            "configuration.device_code",
@@ -247,7 +252,8 @@ func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsN
 
 var ConfigurationWhere = struct {
 	ID                    whereHelperint64
-	BaseURL               whereHelperstring
+	RootURL               whereHelperstring
+	AuthURLPath           whereHelperstring
 	ClientID              whereHelperstring
 	ClientSecret          whereHelperstring
 	DeviceCode            whereHelpernull_String
@@ -265,7 +271,8 @@ var ConfigurationWhere = struct {
 	ProjectID             whereHelpernull_String
 }{
 	ID:                    whereHelperint64{field: "\"zevvy\".\"configuration\".\"id\""},
-	BaseURL:               whereHelperstring{field: "\"zevvy\".\"configuration\".\"base_url\""},
+	RootURL:               whereHelperstring{field: "\"zevvy\".\"configuration\".\"root_url\""},
+	AuthURLPath:           whereHelperstring{field: "\"zevvy\".\"configuration\".\"auth_url_path\""},
 	ClientID:              whereHelperstring{field: "\"zevvy\".\"configuration\".\"client_id\""},
 	ClientSecret:          whereHelperstring{field: "\"zevvy\".\"configuration\".\"client_secret\""},
 	DeviceCode:            whereHelpernull_String{field: "\"zevvy\".\"configuration\".\"device_code\""},
@@ -311,8 +318,8 @@ func (r *configurationR) GetAssets() AssetSlice {
 type configurationL struct{}
 
 var (
-	configurationAllColumns            = []string{"id", "base_url", "client_id", "client_secret", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
-	configurationColumnsWithoutDefault = []string{"base_url", "client_id", "client_secret"}
+	configurationAllColumns            = []string{"id", "root_url", "auth_url_path", "client_id", "client_secret", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
+	configurationColumnsWithoutDefault = []string{"root_url", "auth_url_path", "client_id", "client_secret"}
 	configurationColumnsWithDefault    = []string{"id", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
 	configurationPrimaryKeyColumns     = []string{"id"}
 	configurationGeneratedColumns      = []string{}

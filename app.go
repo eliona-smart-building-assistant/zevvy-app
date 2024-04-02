@@ -78,8 +78,8 @@ func sendData() {
 
 			_, _ = conf.SetDbConfigActiveState(context.Background(), dbConfig.ID, true)
 			log.Trace("conf", "Collecting initialized with Configuration %d:\n"+
-				"Enable: %t\nBase URL: %s\nClient ID: %s\nRefresh Interval: %d\nRequest Timeout: %d\n",
-				dbConfig.ID, dbConfig.Enable.Bool, dbConfig.BaseURL, dbConfig.ClientID, dbConfig.RefreshInterval, dbConfig.RequestTimeout)
+				"Enable: %t\nRoot URL: %s\nClient ID: %s\nRefresh Interval: %d\nRequest Timeout: %d\n",
+				dbConfig.ID, dbConfig.Enable.Bool, dbConfig.RootURL, dbConfig.ClientID, dbConfig.RefreshInterval, dbConfig.RequestTimeout)
 
 			// Check for Login process
 			if conf.IsLoginNeeded(dbConfig) {
@@ -93,6 +93,7 @@ func sendData() {
 			// Check for valid access token
 			if !conf.IsAccessTokenIsValid(dbConfig) {
 				refreshTokens(dbConfig)
+				continue
 			}
 
 			// start working

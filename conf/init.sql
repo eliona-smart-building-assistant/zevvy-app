@@ -19,7 +19,8 @@ create schema if not exists zevvy;
 create table if not exists zevvy.configuration
 (
 	id                  bigserial primary key,
-	base_url            text not null,
+    root_url            text not null,
+    auth_url_path       text not null,
 	client_id           text not null,
 	client_secret       text not null,
     device_code         text,

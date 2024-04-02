@@ -212,7 +212,8 @@ components:
       type: object
       description: Each configuration defines access to provider's API.
       required:
-        - baseUrl
+        - rootUrl
+        - authUrlPath
         - clientId
         - clientSecret
       properties:
@@ -222,9 +223,12 @@ components:
           description: Internal identifier for the configured API (created automatically).
           readOnly: true
           nullable: true
-        baseUrl:
+        rootUrl:
           type: string
-          description: Base URL for the API access
+          description: Root URL for the API access
+        authUrlPath:
+          type: string
+          description: Path prefix for authentication URL
         clientId:
           type: string
           description: Client ID for API access

@@ -25,12 +25,13 @@ import (
 )
 
 func GetVerification(dbConfig *appdb.Configuration) (*model.Verification, error) {
-	fullUrl := dbConfig.BaseURL + "/protocol/openid-connect/auth/device"
+	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/auth/device"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
 			"client_id":     {dbConfig.ClientID},
 			"client_secret": {dbConfig.ClientSecret},
+			"scope":         {"offline_access measurement register device"},
 		}, map[string]string{},
 	)
 	if err != nil {
@@ -45,14 +46,13 @@ func GetVerification(dbConfig *appdb.Configuration) (*model.Verification, error)
 }
 
 func GetTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
-	fullUrl := dbConfig.BaseURL + "/protocol/openid-connect/token"
+	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/token"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
 			"client_id":     {dbConfig.ClientID},
 			"client_secret": {dbConfig.ClientSecret},
 			"device_code":   {dbConfig.DeviceCode.String},
-			"scope":         {"offline_access measurement register device"},
 			"grant_type":    {"urn:ietf:params:oauth:grant-type:device_code"},
 		}, map[string]string{},
 	)
@@ -71,7 +71,7 @@ func GetTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 }
 
 func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
-	fullUrl := dbConfig.BaseURL + "/protocol/openid-connect/token"
+	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/token"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
@@ -86,7 +86,7 @@ func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 		return nil, err
 	}
 	token, statusCode, err := utilshttp.ReadWithStatusCode[*model.Token](request, time.Duration(dbConfig.RequestTimeout)*time.Second, true)
-	if token.Error != nil {
+	if token != nil && token.Error != nil {
 		return nil, fmt.Errorf("status reading request for config %d: %s %s", dbConfig.ID, *token.Error, token.ErrorDescription)
 	}
 	if err != nil || statusCode != http.StatusOK {
