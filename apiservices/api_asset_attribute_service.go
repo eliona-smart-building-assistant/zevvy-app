@@ -48,7 +48,7 @@ func (s *AssetAttributeAPIService) GetAssetAttributes(ctx context.Context, confi
 
 // PutAssetAttribute - Creates or updates a configured asset attribute
 func (s *AssetAttributeAPIService) PutAssetAttribute(ctx context.Context, assetAttribute apiserver.AssetAttribute) (apiserver.ImplResponse, error) {
-	upserted, err := conf.UpsertAssetAttribute(ctx, assetAttribute)
+	upserted, err := conf.UpsertAssetAttribute(ctx, &assetAttribute)
 	if errors.Is(err, conf.ErrNotFound) {
 		return apiserver.ImplResponse{Code: http.StatusNotFound}, nil
 	}

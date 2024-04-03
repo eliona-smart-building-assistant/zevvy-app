@@ -15,8 +15,6 @@
 
 package model
 
-import "time"
-
 type Verification struct {
 	DeviceCode              string `json:"device_code"`
 	UserCode                string `json:"user_code"`
@@ -40,6 +38,6 @@ type Token struct {
 }
 
 type Measurement struct {
-	ReadAt time.Time `json:"readAt"`
-	Value  *int      `json:"value"`
+	ReadAt string `json:"readAt"`
+	Value  *int   `json:"value"`
 }

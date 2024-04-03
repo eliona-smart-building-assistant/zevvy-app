@@ -15,11 +15,11 @@ type Configuration struct {
 	// Internal identifier for the configured API (created automatically).
 	Id *int64 `json:"id,omitempty"`
 
-	// Root URL for the API access
-	RootUrl string `json:"rootUrl"`
+	// Root URL for the authentication process
+	AuthRootUrl string `json:"authRootUrl,omitempty"`
 
-	// Path prefix for authentication URL
-	AuthUrlPath string `json:"authUrlPath"`
+	// Root URL for the API access
+	ApiRootUrl string `json:"apiRootUrl,omitempty"`
 
 	// Client ID for API access
 	ClientId string `json:"clientId"`
@@ -55,8 +55,6 @@ type Configuration struct {
 // AssertConfigurationRequired checks if the required fields are not zero-ed
 func AssertConfigurationRequired(obj Configuration) error {
 	elements := map[string]interface{}{
-		"rootUrl":      obj.RootUrl,
-		"authUrlPath":  obj.AuthUrlPath,
 		"clientId":     obj.ClientId,
 		"clientSecret": obj.ClientSecret,
 	}

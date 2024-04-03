@@ -19,8 +19,8 @@ create schema if not exists zevvy;
 create table if not exists zevvy.configuration
 (
     id                      bigserial primary key,
-    root_url                text    not null,
-    auth_url_path           text    not null,
+    auth_root_url           text    not null,
+    api_root_url            text    not null,
     client_id               text    not null,
     client_secret           text    not null,
     device_code             text,
@@ -46,7 +46,7 @@ create table if not exists zevvy.asset_attribute
     attribute_name     text                     not null,
     device_reference   text                     not null,
     register_reference text                     not null,
-    latest_ts          timestamp with time zone not null default '1900-01-01 00:00:00',
+    latest_ts          timestamp with time zone not null default current_timestamp,
     primary key (config_id, asset_id, subtype, attribute_name)
 );
 

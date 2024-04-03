@@ -25,8 +25,8 @@ import (
 // Configuration is an object representing the database table.
 type Configuration struct {
 	ID                    int64       `boil:"id" json:"id" toml:"id" yaml:"id"`
-	RootURL               string      `boil:"root_url" json:"root_url" toml:"root_url" yaml:"root_url"`
-	AuthURLPath           string      `boil:"auth_url_path" json:"auth_url_path" toml:"auth_url_path" yaml:"auth_url_path"`
+	AuthRootURL           string      `boil:"auth_root_url" json:"auth_root_url" toml:"auth_root_url" yaml:"auth_root_url"`
+	APIRootURL            string      `boil:"api_root_url" json:"api_root_url" toml:"api_root_url" yaml:"api_root_url"`
 	ClientID              string      `boil:"client_id" json:"client_id" toml:"client_id" yaml:"client_id"`
 	ClientSecret          string      `boil:"client_secret" json:"client_secret" toml:"client_secret" yaml:"client_secret"`
 	DeviceCode            null.String `boil:"device_code" json:"device_code,omitempty" toml:"device_code" yaml:"device_code,omitempty"`
@@ -49,8 +49,8 @@ type Configuration struct {
 
 var ConfigurationColumns = struct {
 	ID                    string
-	RootURL               string
-	AuthURLPath           string
+	AuthRootURL           string
+	APIRootURL            string
 	ClientID              string
 	ClientSecret          string
 	DeviceCode            string
@@ -68,8 +68,8 @@ var ConfigurationColumns = struct {
 	ProjectID             string
 }{
 	ID:                    "id",
-	RootURL:               "root_url",
-	AuthURLPath:           "auth_url_path",
+	AuthRootURL:           "auth_root_url",
+	APIRootURL:            "api_root_url",
 	ClientID:              "client_id",
 	ClientSecret:          "client_secret",
 	DeviceCode:            "device_code",
@@ -89,8 +89,8 @@ var ConfigurationColumns = struct {
 
 var ConfigurationTableColumns = struct {
 	ID                    string
-	RootURL               string
-	AuthURLPath           string
+	AuthRootURL           string
+	APIRootURL            string
 	ClientID              string
 	ClientSecret          string
 	DeviceCode            string
@@ -108,8 +108,8 @@ var ConfigurationTableColumns = struct {
 	ProjectID             string
 }{
 	ID:                    "configuration.id",
-	RootURL:               "configuration.root_url",
-	AuthURLPath:           "configuration.auth_url_path",
+	AuthRootURL:           "configuration.auth_root_url",
+	APIRootURL:            "configuration.api_root_url",
 	ClientID:              "configuration.client_id",
 	ClientSecret:          "configuration.client_secret",
 	DeviceCode:            "configuration.device_code",
@@ -290,8 +290,8 @@ func (w whereHelpernull_Bool) IsNotNull() qm.QueryMod { return qmhelper.WhereIsN
 
 var ConfigurationWhere = struct {
 	ID                    whereHelperint64
-	RootURL               whereHelperstring
-	AuthURLPath           whereHelperstring
+	AuthRootURL           whereHelperstring
+	APIRootURL            whereHelperstring
 	ClientID              whereHelperstring
 	ClientSecret          whereHelperstring
 	DeviceCode            whereHelpernull_String
@@ -309,8 +309,8 @@ var ConfigurationWhere = struct {
 	ProjectID             whereHelpernull_String
 }{
 	ID:                    whereHelperint64{field: "\"zevvy\".\"configuration\".\"id\""},
-	RootURL:               whereHelperstring{field: "\"zevvy\".\"configuration\".\"root_url\""},
-	AuthURLPath:           whereHelperstring{field: "\"zevvy\".\"configuration\".\"auth_url_path\""},
+	AuthRootURL:           whereHelperstring{field: "\"zevvy\".\"configuration\".\"auth_root_url\""},
+	APIRootURL:            whereHelperstring{field: "\"zevvy\".\"configuration\".\"api_root_url\""},
 	ClientID:              whereHelperstring{field: "\"zevvy\".\"configuration\".\"client_id\""},
 	ClientSecret:          whereHelperstring{field: "\"zevvy\".\"configuration\".\"client_secret\""},
 	DeviceCode:            whereHelpernull_String{field: "\"zevvy\".\"configuration\".\"device_code\""},
@@ -345,8 +345,8 @@ func (*configurationR) NewStruct() *configurationR {
 type configurationL struct{}
 
 var (
-	configurationAllColumns            = []string{"id", "root_url", "auth_url_path", "client_id", "client_secret", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
-	configurationColumnsWithoutDefault = []string{"root_url", "auth_url_path", "client_id", "client_secret"}
+	configurationAllColumns            = []string{"id", "auth_root_url", "api_root_url", "client_id", "client_secret", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
+	configurationColumnsWithoutDefault = []string{"auth_root_url", "api_root_url", "client_id", "client_secret"}
 	configurationColumnsWithDefault    = []string{"id", "device_code", "verification_uri", "verification_uri_expire", "verification_interval", "access_token", "access_token_expire", "refresh_token", "refresh_interval", "request_timeout", "active", "enable", "user_id", "project_id"}
 	configurationPrimaryKeyColumns     = []string{"id"}
 	configurationGeneratedColumns      = []string{}

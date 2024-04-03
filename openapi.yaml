@@ -280,12 +280,12 @@ components:
           description: Internal identifier for the configured API (created automatically).
           readOnly: true
           nullable: true
-        rootUrl:
+        authRootUrl:
+          type: string
+          description: Root URL for the authentication process
+        apiRootUrl:
           type: string
           description: Root URL for the API access
-        authUrlPath:
-          type: string
-          description: Path prefix for authentication URL
         clientId:
           type: string
           description: Client ID for API access
@@ -358,6 +358,7 @@ components:
           type: string
           format: date-time
           description: Latest timestamp of data sent to Zevvy
+          nullable: true
         deviceReference:
           type: string
           description: The device reference in Zevvy (default device reference is asset's GAI)

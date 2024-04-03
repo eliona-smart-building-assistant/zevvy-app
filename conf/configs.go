@@ -97,8 +97,8 @@ func DeleteConfig(ctx context.Context, configID int64) error {
 }
 
 func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuration) (dbConfig appdb.Configuration, err error) {
-	dbConfig.RootURL = apiConfig.RootUrl
-	dbConfig.AuthURLPath = apiConfig.AuthUrlPath
+	dbConfig.AuthRootURL = apiConfig.AuthRootUrl
+	dbConfig.APIRootURL = apiConfig.ApiRootUrl
 	dbConfig.ClientID = apiConfig.ClientId
 	dbConfig.ClientSecret = apiConfig.ClientSecret
 	dbConfig.RefreshToken = null.StringFromPtr(apiConfig.RefreshToken)
@@ -118,8 +118,8 @@ func dbConfigFromApiConfig(ctx context.Context, apiConfig apiserver.Configuratio
 }
 
 func apiConfigFromDbConfig(dbConfig *appdb.Configuration) (apiConfig apiserver.Configuration, err error) {
-	apiConfig.RootUrl = dbConfig.RootURL
-	apiConfig.AuthUrlPath = dbConfig.AuthURLPath
+	apiConfig.AuthRootUrl = dbConfig.AuthRootURL
+	apiConfig.ApiRootUrl = dbConfig.APIRootURL
 	apiConfig.ClientId = dbConfig.ClientID
 	apiConfig.VerificationUri = dbConfig.VerificationURI.Ptr()
 	apiConfig.ClientSecret = maskSecret(dbConfig.ClientSecret)

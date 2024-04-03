@@ -18,6 +18,7 @@ package zevvy
 import (
 	"fmt"
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
+	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"net/http"
 	"time"
 	"zevvy-app/appdb"
@@ -25,7 +26,7 @@ import (
 )
 
 func GetVerification(dbConfig *appdb.Configuration) (*model.Verification, error) {
-	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/auth/device"
+	fullUrl := dbConfig.AuthRootURL + "/protocol/openid-connect/auth/device"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
@@ -46,7 +47,7 @@ func GetVerification(dbConfig *appdb.Configuration) (*model.Verification, error)
 }
 
 func GetTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
-	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/token"
+	fullUrl := dbConfig.AuthRootURL + "/protocol/openid-connect/token"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
@@ -71,7 +72,7 @@ func GetTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 }
 
 func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
-	fullUrl := dbConfig.RootURL + dbConfig.AuthURLPath + "/protocol/openid-connect/token"
+	fullUrl := dbConfig.AuthRootURL + "/protocol/openid-connect/token"
 	request, err := utilshttp.NewPostFormRequestWithHeaders(
 		fullUrl,
 		map[string][]string{
@@ -97,14 +98,17 @@ func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 }
 
 func SendMeasurements(dbConfig *appdb.Configuration, dbAssetAttribute *appdb.AssetAttribute, measurements []model.Measurement) error {
-	fullUrl := dbConfig.RootURL + fmt.Sprintf("/deviceRef/%s/registerRef/%s/measurements/_bulk_create", dbAssetAttribute.DeviceReference, dbAssetAttribute.RegisterReference)
+	fullUrl := dbConfig.APIRootURL + fmt.Sprintf("/deviceRef/%s/registerRef/%s/measurements/_bulk_create", dbAssetAttribute.DeviceReference, dbAssetAttribute.RegisterReference)
 	request, err := utilshttp.NewPostRequestWithBearer(fullUrl, measurements, dbConfig.AccessToken.String)
 	if err != nil {
 		return err
 	}
 	_, statusCode, err := utilshttp.ReadWithStatusCode[any](request, time.Duration(dbConfig.RequestTimeout)*time.Second, true)
-	if err != nil || statusCode != http.StatusOK {
+	if err != nil || (statusCode != http.StatusCreated && statusCode != http.StatusConflict) {
 		return fmt.Errorf("error reading request for %s: %d %w", fullUrl, statusCode, err)
+	}
+	if statusCode == http.StatusConflict {
+		log.Warn("Zevvy", "Conflict for %s", fullUrl)
 	}
 	return nil
 }

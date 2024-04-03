@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
+	"strings"
 	"time"
 	"zevvy-app/apiserver"
 	"zevvy-app/appdb"
@@ -28,8 +29,8 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )
 
-func UpsertAssetAttribute(ctx context.Context, apiAssetAttribute apiserver.AssetAttribute) (apiserver.AssetAttribute, error) {
-	dbAssetAttribute := dbAssetAttributeFromApiAssetAttribute(&apiAssetAttribute)
+func UpsertAssetAttribute(ctx context.Context, apiAssetAttribute *apiserver.AssetAttribute) (*apiserver.AssetAttribute, error) {
+	dbAssetAttribute := dbAssetAttributeFromApiAssetAttribute(apiAssetAttribute)
 	apiAsset, err := eliona.GetAsset(dbAssetAttribute)
 	if err != nil {
 		return apiAssetAttribute, fmt.Errorf("Erro getting asset from Eliona: %w", err)
@@ -38,10 +39,10 @@ func UpsertAssetAttribute(ctx context.Context, apiAssetAttribute apiserver.Asset
 		return apiAssetAttribute, ErrNotFound
 	}
 	if len(dbAssetAttribute.DeviceReference) == 0 {
-		dbAssetAttribute.DeviceReference = apiAsset.GlobalAssetIdentifier
+		dbAssetAttribute.DeviceReference = strings.Trim(apiAsset.GlobalAssetIdentifier, " ")
 	}
 	if len(dbAssetAttribute.RegisterReference) == 0 {
-		dbAssetAttribute.RegisterReference = apiAssetAttribute.AttributeName
+		dbAssetAttribute.RegisterReference = strings.Trim(apiAssetAttribute.AttributeName, " ")
 	}
 
 	err = dbAssetAttribute.UpsertG(ctx, true,
@@ -69,7 +70,7 @@ func UpsertAssetAttribute(ctx context.Context, apiAssetAttribute apiserver.Asset
 	if err != nil {
 		return apiAssetAttribute, err
 	}
-	return apiAssetAttribute, nil
+	return apiAssetAttributeFromDbAssetAttribute(dbAssetAttribute), nil
 }
 
 func UpdateAssetAttributeLatestTimestamp(ctx context.Context, dbAssetAttribute *appdb.AssetAttribute, latestTimestamp time.Time) error {
@@ -82,7 +83,8 @@ func GetDbAssetAttributes(ctx context.Context, configId int64) (dbAssetAttribute
 	return appdb.AssetAttributes(appdb.AssetAttributeWhere.ConfigID.EQ(int32(configId))).AllG(ctx)
 }
 
-func GetAssetAttributes(ctx context.Context, configId int32, assetId int32, subtype string, attributeName string) (apiAssetAttributes []*apiserver.AssetAttribute, err error) {
+func GetAssetAttributes(ctx context.Context, configId int32, assetId int32, subtype string, attributeName string) ([]*apiserver.AssetAttribute, error) {
+	var apiAssetAttributes []*apiserver.AssetAttribute
 	mods := selectAssetAttributesMods(configId, assetId, subtype, attributeName)
 	dbAssetAttributes, err := appdb.AssetAttributes(mods...).AllG(ctx)
 	if err != nil {
@@ -120,27 +122,35 @@ func DeleteAssetAttributes(ctx context.Context, configId int32, assetId int32, s
 	return nil
 }
 
-func dbAssetAttributeFromApiAssetAttribute(apiAssetAttribute *apiserver.AssetAttribute) (dbAssetAttribute *appdb.AssetAttribute) {
+func dbAssetAttributeFromApiAssetAttribute(apiAssetAttribute *apiserver.AssetAttribute) *appdb.AssetAttribute {
+	var dbAssetAttribute *appdb.AssetAttribute
 	if apiAssetAttribute != nil {
+		dbAssetAttribute = new(appdb.AssetAttribute)
 		dbAssetAttribute.ConfigID = apiAssetAttribute.ConfigId
 		dbAssetAttribute.AssetID = apiAssetAttribute.AssetId
 		dbAssetAttribute.Subtype = apiAssetAttribute.Subtype
 		dbAssetAttribute.AttributeName = apiAssetAttribute.AttributeName
 		dbAssetAttribute.DeviceReference = common.Val(apiAssetAttribute.DeviceReference)
 		dbAssetAttribute.RegisterReference = common.Val(apiAssetAttribute.RegisterReference)
+		dbAssetAttribute.LatestTS = common.Val(apiAssetAttribute.LatestTimestamp)
+		if apiAssetAttribute.LatestTimestamp == nil {
+			dbAssetAttribute.LatestTS = time.Now()
+		}
 	}
 	return dbAssetAttribute
 }
 
-func apiAssetAttributeFromDbAssetAttribute(dbAssetAttribute *appdb.AssetAttribute) (apiAssetAttribute *apiserver.AssetAttribute) {
+func apiAssetAttributeFromDbAssetAttribute(dbAssetAttribute *appdb.AssetAttribute) *apiserver.AssetAttribute {
+	var apiAssetAttribute *apiserver.AssetAttribute
 	if dbAssetAttribute != nil {
+		apiAssetAttribute = new(apiserver.AssetAttribute)
 		apiAssetAttribute.ConfigId = dbAssetAttribute.ConfigID
 		apiAssetAttribute.AssetId = dbAssetAttribute.AssetID
 		apiAssetAttribute.Subtype = dbAssetAttribute.Subtype
 		apiAssetAttribute.AttributeName = dbAssetAttribute.AttributeName
 		apiAssetAttribute.DeviceReference = common.Ptr(dbAssetAttribute.DeviceReference)
 		apiAssetAttribute.RegisterReference = common.Ptr(dbAssetAttribute.RegisterReference)
-		apiAssetAttribute.LatestTimestamp = dbAssetAttribute.LatestTS
+		apiAssetAttribute.LatestTimestamp = common.Ptr(dbAssetAttribute.LatestTS)
 	}
 	return apiAssetAttribute
 }

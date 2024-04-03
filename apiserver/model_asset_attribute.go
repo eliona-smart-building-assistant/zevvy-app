@@ -29,7 +29,7 @@ type AssetAttribute struct {
 	AttributeName string `json:"attributeName"`
 
 	// Latest timestamp of data sent to Zevvy
-	LatestTimestamp time.Time `json:"latestTimestamp,omitempty"`
+	LatestTimestamp *time.Time `json:"latestTimestamp,omitempty"`
 
 	// The device reference in Zevvy (default device reference is asset's GAI)
 	DeviceReference *string `json:"deviceReference,omitempty"`

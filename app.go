@@ -80,7 +80,7 @@ func sendData() {
 			_, _ = conf.SetDbConfigActiveState(context.Background(), dbConfig.ID, true)
 			log.Trace("conf", "Collecting initialized with Configuration %d:\n"+
 				"Enable: %t\nRoot URL: %s\nClient ID: %s\nRefresh Interval: %d\nRequest Timeout: %d\n",
-				dbConfig.ID, dbConfig.Enable.Bool, dbConfig.RootURL, dbConfig.ClientID, dbConfig.RefreshInterval, dbConfig.RequestTimeout)
+				dbConfig.ID, dbConfig.Enable.Bool, dbConfig.APIRootURL, dbConfig.ClientID, dbConfig.RefreshInterval, dbConfig.RequestTimeout)
 
 			// Check for Login process
 			if conf.IsLoginNeeded(dbConfig) {
@@ -91,23 +91,21 @@ func sendData() {
 				continue
 			}
 
-			// Check for valid access token
-			if !conf.IsAccessTokenIsValid(dbConfig) {
-				refreshTokens(dbConfig)
-				continue
-			}
-
 			// start working
 			common.RunOnceWithParam(func(config appdb.Configuration) {
-
-				log.Info("app", "Do something for %d", config.ID)
-
 				log.Info("main", "Collecting %d started.", config.ID)
+
+				// Check for valid access token
+				if !conf.IsAccessTokenIsValid(&config) {
+					refreshTokens(&config)
+				}
+
+				// Send data to Zevvy
 				if err := collectData(&config); err != nil {
 					return // Error is handled in the method itself.
 				}
-				log.Info("main", "Collecting %d finished.", config.ID)
 
+				log.Info("main", "Collecting %d finished.", config.ID)
 				time.Sleep(time.Second * time.Duration(config.RefreshInterval))
 			}, *dbConfig, dbConfig.ID)
 
@@ -126,20 +124,22 @@ func collectData(dbConfig *appdb.Configuration) error {
 
 	for _, dbAssetAttribute := range dbAssetAttributes {
 
-		log.Debug("main", "Sending for attribute %d %s %s.", dbAssetAttribute.AssetID, dbAssetAttribute.Subtype, dbAssetAttribute.AttributeName)
-
-		dataTrends, err := eliona.GetDataTrends(dbAssetAttribute)
+		apiDataTrends, err := eliona.GetDataTrends(dbAssetAttribute)
 		if err != nil {
 			log.Error("ELiona", "Cannot get asset attributes: %v", err)
 			return err
 		}
 
+		if len(apiDataTrends) > 1 {
+			log.Debug("main", "Sending for attribute %d %s %s.", dbAssetAttribute.AssetID, dbAssetAttribute.Subtype, dbAssetAttribute.AttributeName)
+		}
+
 		// convert trend data to measurements
 		var measurements []model.Measurement
-		var latestTimestamp time.Time
-		for _, dataTrend := range dataTrends {
-			if dataTrend.Timestamp.IsSet() {
-				timestamp := common.Val(dataTrend.Timestamp.Get())
+		var latestTimestamp = dbAssetAttribute.LatestTS
+		for _, apiDataTrend := range apiDataTrends {
+			if apiDataTrend.Timestamp.IsSet() {
+				timestamp := common.Val(apiDataTrend.Timestamp.Get())
 
 				// check if data is already sent
 				if !timestamp.After(dbAssetAttribute.LatestTS) {
@@ -147,9 +147,9 @@ func collectData(dbConfig *appdb.Configuration) error {
 				}
 
 				// convert data trend to measurement
-				measurement := measurementFromTrend(timestamp, dataTrend, dbAssetAttribute)
+				measurement := measurementFromTrend(timestamp, apiDataTrend, dbAssetAttribute)
 				if measurement.Value != nil {
-					log.Debug("main", "Sending data for attribute %s: %d", measurement.ReadAt.Format(time.RFC3339), *measurement.Value)
+					log.Debug("main", "Sending data for attribute %s: %d", measurement.ReadAt, *measurement.Value)
 					measurements = append(measurements, measurement)
 				}
 
@@ -182,8 +182,9 @@ func collectData(dbConfig *appdb.Configuration) error {
 }
 
 func measurementFromTrend(timestamp time.Time, dataTrend api.Data, dbAssetAttribute *appdb.AssetAttribute) model.Measurement {
+	const outputFormat = "2006-01-02T15:04:05.000Z"
 	measurement := model.Measurement{
-		ReadAt: timestamp,
+		ReadAt: timestamp.Format(outputFormat),
 	}
 	if value, ok := dataTrend.Data[dbAssetAttribute.AttributeName]; ok {
 		if intValue, ok := value.(int); ok {
@@ -193,6 +194,12 @@ func measurementFromTrend(timestamp time.Time, dataTrend api.Data, dbAssetAttrib
 			measurement.Value = common.Ptr(int(intValue))
 		}
 		if intValue, ok := value.(int64); ok {
+			measurement.Value = common.Ptr(int(intValue))
+		}
+		if intValue, ok := value.(float32); ok {
+			measurement.Value = common.Ptr(int(intValue))
+		}
+		if intValue, ok := value.(float64); ok {
 			measurement.Value = common.Ptr(int(intValue))
 		}
 	}
@@ -263,8 +270,8 @@ func startLoginProcess(dbConfig *appdb.Configuration) {
 		// Notify user
 		log.Info("zevvy", "Notify user about successful authentication process for configuration %d", dbConfig.ID)
 		err = eliona.NotifyUser(dbConfig.UserID.String, dbConfig.ProjectID.String, api.Translation{
-			De: common.Ptr(fmt.Sprintf("Verifikation der Zevvy App war erfolgreich.")),
-			En: common.Ptr(fmt.Sprintf("Verification of the Zevvy app was successful.")),
+			De: common.Ptr(fmt.Sprintf("Zevvy App wurde erfolgreich verifiziert.")),
+			En: common.Ptr(fmt.Sprintf("Zevvy app was successful verfied.")),
 		})
 		if err != nil {
 			log.Error("eliona", "Cannot notify user about verification: %v", err)

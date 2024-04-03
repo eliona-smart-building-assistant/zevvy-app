@@ -61,8 +61,8 @@ A minimum configuration that can used by the app's API endpoint `POST /configs` 
 
 ```json
 {
-  "rootUrl": "https://iam.zevvy.org",
-  "authUrlPath": "/realms/zevvy-prod",
+  "authRootUrl": "https://iam.zevvy.org/realms/zevvy-prod",
+  "apiRootUrl": "https://api.zevvy.org",
   "clientId": "client",
   "clientSecret": "secret",
   "enable": true
@@ -81,9 +81,10 @@ To ensure data is successfully reported to Zevvy, the necessary asset attributes
 
 ```json
 {
+  "configId": 1,
   "assetId": 4711,
   "subtype": "input",
-  "clientId": "power"
+  "attributeName": "power"
 }
 ```
 
