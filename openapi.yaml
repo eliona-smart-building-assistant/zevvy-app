@@ -17,29 +17,36 @@ openapi: 3.0.3
 
 info:
   version: 1.0.0
-  title: App template API
-  description: API to access and configure the app template
+  title: Zevvy app API
+  description: API to access and configure the Zevvy app
 externalDocs:
-  description: Find out more about the app template
-  url: https://github.com/eliona-smart-building-assistant/app-template
+  description: Find out more about the Zevvy app
+  url: https://github.com/eliona-smart-building-assistant/zevvy-app
 servers:
-  - url: http://template/v1
+  - url: "https://{server}/v1"
+    variables:
+      server:
+        default: zevvy
+  - url: "https://{environment}.eliona.io/apps/zevvy/api/v1"
+    variables:
+      environment:
+        default: name
 
 tags:
   - name: Configuration
     description: Configure the app
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/zevvy-app
 
   - name: Asset Attribute
     description: Configure asset attributes
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/zevvy-app
 
   - name: Version
     description: API version
     externalDocs:
-      url: https://github.com/eliona-smart-building-assistant/app-template
+      url: https://github.com/eliona-smart-building-assistant/zevvy-app
 
 paths:
   /configs:

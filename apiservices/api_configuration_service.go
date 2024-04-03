@@ -19,8 +19,8 @@ import (
 	"context"
 	"errors"
 	"net/http"
-	"zevvy-app/apiserver"
-	"zevvy-app/conf"
+	"zevvy/apiserver"
+	"zevvy/conf"
 )
 
 // ConfigurationAPIService is a service that implements the logic for the ConfigurationAPIServicer

@@ -1,18 +1,16 @@
-# App Template
+# Eliona App for Zevvy
 
-This template is a part of the Eliona App SDK. It can be used to create an app stub for an Eliona environment.
+This app sends measurement data to [Zevvy](https://app.zevvy.org/) using the [Zevvy-API](https://api.zevvy.org/docs/ui).
 
 ## Configuration
 
 The app needs environment variables and database tables for configuration. To edit the database tables the app provides an own API access.
-
 
 ### Registration in Eliona ###
 
 To start and initialize an app in an Eliona environment, the app has to be registered in Eliona. For this, entries in database tables `public.eliona_app` and `public.eliona_store` are necessary.
 
 This initialization can be handled by the `reset.sql` script.
-
 
 ### Environment variables
 
@@ -34,14 +32,13 @@ This initialization can be handled by the `reset.sql` script.
 
 <mark>Todo: Describe other tables if the app needs them.</mark>
 
-The app requires configuration data that remains in the database. To do this, the app creates its own database schema `template` during initialization. To modify and handle the configuration data the app provides an API access. Have a look at the [API specification](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/app-template/develop/openapi.yaml) how the configuration tables should be used.
+The app requires configuration data that remains in the database. To do this, the app creates its own database schema `zevvy` during initialization. To modify and handle the configuration data the app provides an API access. Have a look at the [API specification](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/zevvy-app/develop/openapi.yaml) how the configuration tables should be used.
 
-- `template.configuration`: Contains configuration of the app. Editable through the API.
+- `zevvy.configuration`: Contains configuration of the app and the access to Zevvy API.
 
-- `template.asset`: Provides asset mapping. Maps broker's asset IDs to Eliona asset IDs.
+- `zevvy.asset-attributes`: Defines asset attributes whose data is sent to Zevvy as measurements.
 
 **Generation**: to generate access method to database see Generation section below.
-
 
 ## References
 
@@ -49,7 +46,7 @@ The app requires configuration data that remains in the database. To do this, th
 
 The app provides its own API to access configuration data and other functions. The full description of the API is defined in the `openapi.yaml` OpenAPI definition file.
 
-- [API Reference](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/app-template/develop/openapi.yaml) shows details of the API
+- [API Reference](https://eliona-smart-building-assistant.github.io/open-api-docs/?https://raw.githubusercontent.com/eliona-smart-building-assistant/zevvy-app/develop/openapi.yaml) shows details of the API
 
 **Generation**: to generate api server stub see Generation section below.
 

@@ -30,13 +30,13 @@ import (
 	"net/http"
 	"sync"
 	"time"
-	"zevvy-app/apiserver"
-	"zevvy-app/apiservices"
-	"zevvy-app/appdb"
-	"zevvy-app/conf"
-	"zevvy-app/eliona"
-	"zevvy-app/model"
-	"zevvy-app/zevvy"
+	"zevvy/apiserver"
+	"zevvy/apiservices"
+	"zevvy/appdb"
+	"zevvy/conf"
+	"zevvy/eliona"
+	"zevvy/model"
+	"zevvy/zevvy"
 )
 
 func initialization() {

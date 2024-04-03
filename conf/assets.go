@@ -22,9 +22,9 @@ import (
 	"github.com/volatiletech/sqlboiler/v4/queries/qm"
 	"strings"
 	"time"
-	"zevvy-app/apiserver"
-	"zevvy-app/appdb"
-	"zevvy-app/eliona"
+	"zevvy/apiserver"
+	"zevvy/appdb"
+	"zevvy/eliona"
 
 	"github.com/volatiletech/sqlboiler/v4/boil"
 )

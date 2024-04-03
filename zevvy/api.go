@@ -21,8 +21,8 @@ import (
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"net/http"
 	"time"
-	"zevvy-app/appdb"
-	"zevvy-app/model"
+	"zevvy/appdb"
+	"zevvy/model"
 )
 
 func GetVerification(dbConfig *appdb.Configuration) (*model.Verification, error) {

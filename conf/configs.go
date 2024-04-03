@@ -21,9 +21,9 @@ import (
 	"errors"
 	"fmt"
 	"time"
-	"zevvy-app/apiserver"
-	"zevvy-app/appdb"
-	"zevvy-app/model"
+	"zevvy/apiserver"
+	"zevvy/appdb"
+	"zevvy/model"
 
 	"github.com/eliona-smart-building-assistant/go-eliona/frontend"
 	"github.com/eliona-smart-building-assistant/go-utils/common"

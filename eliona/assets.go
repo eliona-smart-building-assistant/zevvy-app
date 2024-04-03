@@ -20,7 +20,7 @@ import (
 	api "github.com/eliona-smart-building-assistant/go-eliona-api-client/v2"
 	"github.com/eliona-smart-building-assistant/go-eliona/client"
 	"time"
-	"zevvy-app/appdb"
+	"zevvy/appdb"
 )
 
 func GetDataTrends(dbAssetAttribute *appdb.AssetAttribute) ([]api.Data, error) {

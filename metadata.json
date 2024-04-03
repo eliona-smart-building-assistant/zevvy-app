@@ -7,7 +7,7 @@
   },
   "description": {
     "en": "This app send measurements to Zevvy.",
-    "de": "Diese App senden Messdaten an Zevvy."
+    "de": "Diese App sendet Messdaten an Zevvy."
   },
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",

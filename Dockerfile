@@ -30,7 +30,6 @@ FROM eliona/base-alpine:latest AS target
 
 COPY --from=build /app ./
 COPY conf/*.sql ./conf/
-COPY resources/ ./resources/
 COPY openapi.yaml ./
 COPY metadata.json ./
 
