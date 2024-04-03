@@ -16,13 +16,12 @@
 package main
 
 import (
-	"time"
-
 	"github.com/eliona-smart-building-assistant/go-eliona/app"
 	"github.com/eliona-smart-building-assistant/go-utils/common"
 	"github.com/eliona-smart-building-assistant/go-utils/db"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"github.com/volatiletech/sqlboiler/v4/boil"
+	"time"
 )
 
 // The main function starts the app by starting all services necessary for this app and waits
