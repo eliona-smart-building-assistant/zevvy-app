@@ -124,22 +124,22 @@ func collectData(dbConfig *appdb.Configuration) error {
 
 	for _, dbAssetAttribute := range dbAssetAttributes {
 
-		apiDataTrends, err := eliona.GetDataTrends(dbAssetAttribute)
+		apiDataList, err := eliona.GetDataList(dbAssetAttribute)
 		if err != nil {
 			log.Error("ELiona", "Cannot get asset attributes: %v", err)
 			return err
 		}
 
-		if len(apiDataTrends) > 1 {
+		if len(apiDataList) > 0 {
 			log.Debug("main", "Sending for attribute %d %s %s.", dbAssetAttribute.AssetID, dbAssetAttribute.Subtype, dbAssetAttribute.AttributeName)
 		}
 
 		// convert trend data to measurements
 		var measurements []model.Measurement
 		var latestTimestamp = dbAssetAttribute.LatestTS
-		for _, apiDataTrend := range apiDataTrends {
-			if apiDataTrend.Timestamp.IsSet() {
-				timestamp := common.Val(apiDataTrend.Timestamp.Get())
+		for _, apiData := range apiDataList {
+			if apiData.Timestamp.IsSet() {
+				timestamp := common.Val(apiData.Timestamp.Get())
 
 				// check if data is already sent
 				if !timestamp.After(dbAssetAttribute.LatestTS) {
@@ -147,7 +147,7 @@ func collectData(dbConfig *appdb.Configuration) error {
 				}
 
 				// convert data trend to measurement
-				measurement := measurementFromTrend(timestamp, apiDataTrend, dbAssetAttribute)
+				measurement := measurementFromTrend(timestamp, apiData, dbAssetAttribute)
 				if measurement.Value != nil {
 					log.Debug("main", "Sending data for attribute %s: %d", measurement.ReadAt, *measurement.Value)
 					measurements = append(measurements, measurement)
