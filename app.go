@@ -126,7 +126,7 @@ func collectData(dbConfig *appdb.Configuration) error {
 
 		apiDataList, err := eliona.GetDataList(dbAssetAttribute)
 		if err != nil {
-			log.Error("ELiona", "Cannot get asset attributes: %v", err)
+			log.Error("Eliona", "Cannot get asset attributes: %v", err)
 			return err
 		}
 

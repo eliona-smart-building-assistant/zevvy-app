@@ -20,6 +20,7 @@ import (
 	utilshttp "github.com/eliona-smart-building-assistant/go-utils/http"
 	"github.com/eliona-smart-building-assistant/go-utils/log"
 	"net/http"
+	"net/url"
 	"time"
 	"zevvy/appdb"
 	"zevvy/model"
@@ -98,7 +99,7 @@ func RefreshTokens(dbConfig *appdb.Configuration) (*model.Token, error) {
 }
 
 func SendMeasurements(dbConfig *appdb.Configuration, dbAssetAttribute *appdb.AssetAttribute, measurements []model.Measurement) error {
-	fullUrl := dbConfig.APIRootURL + fmt.Sprintf("/deviceRef/%s/registerRef/%s/measurements/_bulk_create", dbAssetAttribute.DeviceReference, dbAssetAttribute.RegisterReference)
+	fullUrl := dbConfig.APIRootURL + fmt.Sprintf("/deviceRef/%s/registerRef/%s/measurements/_bulk_create", url.PathEscape(dbAssetAttribute.DeviceReference), url.PathEscape(dbAssetAttribute.RegisterReference))
 	request, err := utilshttp.NewPostRequestWithBearer(fullUrl, measurements, dbConfig.AccessToken.String)
 	if err != nil {
 		return err
