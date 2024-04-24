@@ -41,9 +41,11 @@ func UpsertAssetAttribute(ctx context.Context, apiAssetAttribute *apiserver.Asse
 	if len(dbAssetAttribute.DeviceReference) == 0 {
 		dbAssetAttribute.DeviceReference = strings.Trim(apiAsset.GlobalAssetIdentifier, " ")
 	}
+	dbAssetAttribute.DeviceReference = strings.Replace(dbAssetAttribute.DeviceReference, "/", "_", -1)
 	if len(dbAssetAttribute.RegisterReference) == 0 {
 		dbAssetAttribute.RegisterReference = strings.Trim(apiAssetAttribute.AttributeName, " ")
 	}
+	dbAssetAttribute.RegisterReference = strings.Replace(dbAssetAttribute.RegisterReference, "/", "_", -1)
 
 	err = dbAssetAttribute.UpsertG(ctx, true,
 		[]string{
@@ -131,9 +133,7 @@ func dbAssetAttributeFromApiAssetAttribute(apiAssetAttribute *apiserver.AssetAtt
 		dbAssetAttribute.Subtype = apiAssetAttribute.Subtype
 		dbAssetAttribute.AttributeName = apiAssetAttribute.AttributeName
 		dbAssetAttribute.DeviceReference = common.Val(apiAssetAttribute.DeviceReference)
-		dbAssetAttribute.DeviceReference = strings.Replace(dbAssetAttribute.DeviceReference, "/", "_", -1)
 		dbAssetAttribute.RegisterReference = common.Val(apiAssetAttribute.RegisterReference)
-		dbAssetAttribute.RegisterReference = strings.Replace(dbAssetAttribute.RegisterReference, "/", "_", -1)
 		dbAssetAttribute.LatestTS = common.Val(apiAssetAttribute.LatestTimestamp)
 		if apiAssetAttribute.LatestTimestamp == nil {
 			dbAssetAttribute.LatestTS = time.Now()
