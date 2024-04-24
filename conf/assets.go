@@ -131,7 +131,9 @@ func dbAssetAttributeFromApiAssetAttribute(apiAssetAttribute *apiserver.AssetAtt
 		dbAssetAttribute.Subtype = apiAssetAttribute.Subtype
 		dbAssetAttribute.AttributeName = apiAssetAttribute.AttributeName
 		dbAssetAttribute.DeviceReference = common.Val(apiAssetAttribute.DeviceReference)
+		dbAssetAttribute.DeviceReference = strings.Replace(dbAssetAttribute.DeviceReference, "/", "_", -1)
 		dbAssetAttribute.RegisterReference = common.Val(apiAssetAttribute.RegisterReference)
+		dbAssetAttribute.RegisterReference = strings.Replace(dbAssetAttribute.RegisterReference, "/", "_", -1)
 		dbAssetAttribute.LatestTS = common.Val(apiAssetAttribute.LatestTimestamp)
 		if apiAssetAttribute.LatestTimestamp == nil {
 			dbAssetAttribute.LatestTS = time.Now()
