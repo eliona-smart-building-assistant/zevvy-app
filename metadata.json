@@ -11,7 +11,7 @@
   },
   "apiUrl": "v1",
   "apiSpecificationPath": "/version/openapi.json",
-  "documentationUrl": "https://doc.eliona.io/eliona/referenzen/app-entwicklung",
+  "documentationUrl": "https://doc.eliona.io/collection/v/eliona-english/eliona-apps/apps/zevvy",
   "useEnvironment": [
     "CONNECTION_STRING",
     "INIT_CONNECTION_STRING",
