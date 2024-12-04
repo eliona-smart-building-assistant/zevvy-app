@@ -21,7 +21,7 @@ info:
   description: API to access and configure the Zevvy app
 externalDocs:
   description: Find out more about the Zevvy app
-  url: https://github.com/eliona-smart-building-assistant/zevvy-app
+  url: https://doc.eliona.io/collection/v/eliona-english/eliona-apps/apps/zevvy
 servers:
   - url: "https://{server}/v1"
     variables:
